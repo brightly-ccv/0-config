@@ -1,0 +1,68 @@
+#!/bin/bash
+ssh_priv_key="$HOME/.ssh/id_ed25519"
+ssh_pub_key="$ssh_priv_key.pub"
+gitlab_hosts=1
+use_ssh="true"
+
+usage() { 
+  echo "Usage: $0 [ -t ] [ -h ] [ -g GITLAB_HOSTS ]" 1>&2 
+  echo ' -h This help message' 1>&2
+  echo ' -t Do not use ssh when testing' 1>&2 
+  echo ' -g Takes a number to loop through setting up gitlab hosts' 1>&2
+}
+
+while getopts "tg:h" options; do 
+	case "${options}" in 
+		t)
+			use_ssh="false"
+			;;
+		g)
+			gitlab_hosts=${OPTARG}
+			;;
+		h)
+			usage
+			exit 0
+			;;
+		:)
+			echo "Error: -${OPTARG} requires an argument."
+			usage
+			exit 1
+			;;
+		*)
+			usage
+			exit 1
+			;;
+	esac
+done
+
+sudo yum install -y keepassxc git gh glab ansible ansible-core
+
+git clone https://github.com/brightly-ccv/bootstrap-config.git
+cd bootstrap-config 
+
+if [ $use_ssh == 'true' ]; 
+	then
+	if [ ! -f "$ssh_priv_key" ]; 
+	then
+		mkdir -p -m 700 ~/.ssh
+		ssh-keygen -t ed25519 -f "$ssh_priv_key"
+		eval `ssh-agent -s`; ssh-add
+	fi
+	gh auth login -h github.com -p ssh -w -s admin:public_key
+	for amount in {1..$gitlab_hosts}
+	do 
+		glab auth login -h $host
+        	glab config set gitlab_host "$host"
+        	glab ssh-key add -t "main driver" "$ssh_pub_key"
+	done 
+fi
+
+ansible-playbook -i localhost, --connection=local -b configure.yml
+
+if [ $use_ssh == 'true' ]; then
+	source "$HOME/.cargo/env"
+	eval `ssh-agent -s`; ssh-add
+	chezmoi init --apply git@github.com:brightly-ccv/dotfiles.git
+	grm repos sync config --config ~/.config/grm/config.toml
+fi
+echo "run 'source $HOME/.cargo/env' if you want to enable rust tools in this session"

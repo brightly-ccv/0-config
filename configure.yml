@@ -1,0 +1,31 @@
+---
+- name: Configuration laptop brightly flavor
+  hosts: all
+  become: true
+  become_user: brightlygourgelsan
+  vars:
+    tools:
+      - chezmoi
+      - cargo
+      - grm
+  tasks:
+    - name: Install dependencies
+      become_user: root
+      ansible.builtin.yum:
+        name:
+          - which
+          - gcc
+          - openssl-devel
+        state: present
+        update_cache: yes
+# Detecting installed packages does not show up before relogin for some programs
+    - name: Check if tools installed
+      ansible.builtin.shell: "which {{ item }} &>/dev/null"
+      register: installed
+      ignore_errors: true
+      with_items: "{{ tools }}"
+
+    - when: item.1.rc == 1
+      name: Install tool if not on system
+      ansible.builtin.shell: "./files/{{ item.0 }}_install.sh"
+      loop: "{{ tools|zip(installed.results)|list }}"
