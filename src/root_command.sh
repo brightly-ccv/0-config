@@ -1,7 +1,7 @@
 echo "# this file is located in 'src/root_command.sh'"
 echo "# you can edit it freely and regenerate (it will not be overwritten)"
 inspect_args
-sudo yum install -y keepassxc git gh glab ansible ansible-core
+sudo yum install -y keepassxc git gh glab ansible ansible-core which gcc openssl-devel
 git clone https://github.com/brightly-ccv/0-config
 cd 0-config
 
@@ -22,10 +22,16 @@ if [ $test == 'true' ];
 	done
 fi
 
-ansible-playbook -i localhost, --connection=local -b configure.yml
+## Install rustup
+curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+## Install chezmoi
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b $HOME/bin
+## Install git repo manager
+. "$HOME/.cargo/env"
+cargo +nightly install git-repo-manager
 
+## Initialize configs for your system
 if [ $use_ssh == 'true' ]; then
-	source "$HOME/.cargo/env"
 	eval `ssh-agent -s`; ssh-add
 	chezmoi init --apply git@github.com:brightly-ccv/dotfiles.git
 	grm repos sync config --config ~/.config/grm/config.toml
