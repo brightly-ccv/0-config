@@ -14,10 +14,14 @@ root_command() {
   # src/root_command.sh
   inspect_args
   sudo yum install -y keepassxc git gh glab ansible ansible-core which gcc openssl-devel
-  git clone https://github.com/brightly-ccv/0-config
+
+  if [ ! -d "0-config" ] ; then
+  	git clone https://github.com/brightly-ccv/0-config
+  fi
+
   cd 0-config || exit
 
-  if [ "$test" == 'true' ]; then
+  if [ -z "${args[--test]}" ]; then
   	if [ ! -f "$private_ssh_key" ]; then
   		mkdir -p -m 700 ~/.ssh
   		ssh-keygen -t ed25519 -f "$private_ssh_key"
@@ -26,7 +30,7 @@ root_command() {
   	fi
   	gh auth login -h github.com -p ssh -w -s admin:public_key
   	counter=0
-  	while [ $counter -lt "$gitlab_hosts" ]; do
+  	while [ $counter -lt "${args[--gitlab_hosts]}" ]; do
   		glab auth login -h "$host"
   		glab config set gitlab_host "$host"
   		glab ssh-key add -t "main driver" "$public_ssh_key"
@@ -39,7 +43,7 @@ root_command() {
   . "$HOME/.cargo/env"
   cargo +nightly install git-repo-manager
 
-  if [ "$use_ssh" == 'true' ]; then
+  if [ -z "${args[--test]}" ]; then
   	eval "$(ssh-agent -s)"
   	ssh-add
   	chezmoi init --apply git@github.com:brightly-ccv/dotfiles.git
@@ -78,13 +82,13 @@ run_usage() {
 
     # :command.usage_flags
     # :flag.usage
-    printf "  %s\n" "--test, -t TEST"
-    printf "    Username to use for logging in\n"
+    printf "  %s\n" "--test, -t"
+    printf "    Testing skips ssh key generation\n"
     echo
 
     # :flag.usage
     printf "  %s\n" "--gitlab_hosts, -g GITLAB_HOSTS"
-    printf "    Password to use for logging in\n"
+    printf "    Gitlab hosts to log in\n"
     echo
 
     # :command.usage_fixed_flags
@@ -228,15 +232,9 @@ parse_requirements() {
       # :flag.case
       --test | -t)
 
-        # :flag.case_arg
-        if [[ -n ${2+x} ]]; then
-          args['--test']="$2"
-          shift
-          shift
-        else
-          printf "%s\n" "--test requires an argument: --test, -t TEST" >&2
-          exit 1
-        fi
+        # :flag.case_no_arg
+        args['--test']=1
+        shift
         ;;
 
       # :flag.case

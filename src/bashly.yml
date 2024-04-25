@@ -13,9 +13,8 @@ environment_variables:
 flags:
 - long: --test
   short: -t
-  arg: test
-  help: Username to use for logging in
+  help: Testing skips ssh key generation
 - long: --gitlab_hosts
   short: -g
   arg: gitlab_hosts
-  help: Password to use for logging in
+  help: Gitlab hosts to log in

@@ -1,9 +1,13 @@
 inspect_args
 sudo yum install -y keepassxc git gh glab ansible ansible-core which gcc openssl-devel
-git clone https://github.com/brightly-ccv/0-config
+
+if [ ! -d "0-config" ] ; then
+	git clone https://github.com/brightly-ccv/0-config
+fi
+
 cd 0-config || exit
 
-if [ "$test" == 'true' ]; then
+if [ -z "${args[--test]}" ]; then
 	if [ ! -f "$private_ssh_key" ]; then
 		mkdir -p -m 700 ~/.ssh
 		ssh-keygen -t ed25519 -f "$private_ssh_key"
@@ -12,7 +16,7 @@ if [ "$test" == 'true' ]; then
 	fi
 	gh auth login -h github.com -p ssh -w -s admin:public_key
 	counter=0
-	while [ $counter -lt "$gitlab_hosts" ]; do
+	while [ $counter -lt "${args[--gitlab_hosts]}" ]; do
 		glab auth login -h "$host"
 		glab config set gitlab_host "$host"
 		glab ssh-key add -t "main driver" "$public_ssh_key"
@@ -29,7 +33,7 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/bin"
 cargo +nightly install git-repo-manager
 
 ## Initialize configs for your system
-if [ "$use_ssh" == 'true' ]; then
+if [ -z "${args[--test]}" ]; then
 	eval "$(ssh-agent -s)"
 	ssh-add
 	chezmoi init --apply git@github.com:brightly-ccv/dotfiles.git
