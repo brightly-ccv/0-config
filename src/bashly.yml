@@ -1,0 +1,21 @@
+name: run
+help: Bootstrap Config
+version: 0.1.0
+
+environment_variables:
+- name: private_ssh_key
+  default: "$HOME/.ssh/id_ed25519"
+  help: Set private ssh key path
+- name: public_ssh_key
+  default: "$HOME/.ssh/id_ed25519.pub"
+  help: Set public ssh key path
+
+flags:
+- long: --test
+  short: -t
+  arg: test
+  help: Username to use for logging in
+- long: --gitlab_hosts
+  short: -g
+  arg: gitlab_hosts
+  help: Password to use for logging in
