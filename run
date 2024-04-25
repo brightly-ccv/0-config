@@ -17,7 +17,7 @@ root_command() {
   inspect_args
   sudo yum install -y keepassxc git gh glab ansible ansible-core
   git clone https://github.com/brightly-ccv/0-config
-  cd bootstrap-config
+  cd 0-config
 
   if [ $test == 'true' ];
   	then
@@ -182,12 +182,6 @@ inspect_args() {
       echo "- \$$k = ${!k:-}"
     done
   fi
-}
-
-# :command.user_lib
-# src/lib/sample_function.sh
-sample_function() {
-  echo "it works"
 }
 
 # :command.command_functions
